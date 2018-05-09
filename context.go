@@ -8,40 +8,16 @@ import (
 	"github.com/caicloud/aloe/utils/jsonutil"
 )
 
-func (gf *genericFramework) constructContext(ctx *types.Context, ctxConfig *types.ContextConfig) error {
+func (gf *genericFramework) constructContext(ctx *types.Context, ctxConfig *types.ContextConfig, reconstruct bool) error {
 	if ctx.Variables == nil {
 		ctx.Variables = map[string]jsonutil.Variable{}
 	}
 	if err := gf.preset(ctx, ctxConfig.Presetter); err != nil {
 		return err
 	}
-	for _, rt := range ctxConfig.Flow {
+	if !reconstruct {
+		for _, rt := range ctxConfig.Flow {
 
-		_, vs, err := gf.roundTrip(ctx, &rt)
-		if err != nil {
-			return err
-		}
-		for k, v := range vs {
-			if _, ok := ctx.Variables[k]; ok {
-				return fmt.Errorf("variable %v has been defined", k)
-			}
-			ctx.Variables[k] = v
-		}
-	}
-	for _, rts := range ctxConfig.ValidatedFlow {
-		for _, rt := range rts.Constructor {
-			_, vs, err := gf.roundTrip(ctx, &rt)
-			if err != nil {
-				return err
-			}
-			for k, v := range vs {
-				if _, ok := ctx.Variables[k]; ok {
-					return fmt.Errorf("variable %v has been defined", k)
-				}
-				ctx.Variables[k] = v
-			}
-		}
-		for _, rt := range rts.Validator {
 			_, vs, err := gf.roundTrip(ctx, &rt)
 			if err != nil {
 				return err
@@ -55,17 +31,6 @@ func (gf *genericFramework) constructContext(ctx *types.Context, ctxConfig *type
 		}
 	}
 
-	ctx.CleanerName = ctxConfig.Cleaner
-	return nil
-}
-
-func (gf *genericFramework) reconstructContext(ctx *types.Context, ctxConfig *types.ContextConfig) error {
-	if ctx.Variables == nil {
-		ctx.Variables = map[string]jsonutil.Variable{}
-	}
-	if err := gf.preset(ctx, ctxConfig.Presetter); err != nil {
-		return err
-	}
 	for _, rts := range ctxConfig.ValidatedFlow {
 		shouldReconstruct := false
 		for _, rt := range rts.Validator {
@@ -90,6 +55,7 @@ func (gf *genericFramework) reconstructContext(ctx *types.Context, ctxConfig *ty
 			}
 		}
 	}
+
 	ctx.CleanerName = ctxConfig.Cleaner
 	return nil
 }

@@ -114,10 +114,10 @@ func (gf *genericFramework) walk(ctx *types.Context, dir *data.Dir) func() {
 			defer lock.Unlock()
 			if count == 0 {
 				// construct context from context config file
-				gomega.Expect(gf.constructContext(ctx, &ctxConfig)).
+				gomega.Expect(gf.constructContext(ctx, &ctxConfig, false)).
 					NotTo(gomega.HaveOccurred())
 			} else {
-				gomega.Expect(gf.reconstructContext(ctx, &ctxConfig)).
+				gomega.Expect(gf.constructContext(ctx, &ctxConfig, true)).
 					NotTo(gomega.HaveOccurred())
 			}
 			curContext = saveContext(ctx)
